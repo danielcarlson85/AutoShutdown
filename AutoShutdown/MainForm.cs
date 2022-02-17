@@ -20,8 +20,6 @@ namespace AutoavstägningCS
         {
             InitializeComponent();
 
-            CheckIfTeamsIsRunning();
-
             timer1.Enabled = true;
             timer1.Interval = 1000;
             timer1.Tick += new System.EventHandler(this.Timer1_Tick);
@@ -35,8 +33,6 @@ namespace AutoavstägningCS
 
         private void Timer1_Tick(object sender, EventArgs e)
         {
-            UpdateTextBoxes();
-
             if (insertkeyPressed == Keys.Insert.ToString())
             {
                 insertkeyPressed3seconds++;
@@ -55,6 +51,8 @@ namespace AutoavstägningCS
             elapsedTime++;
 
             StartShutdownProcess();
+
+            UpdateTextBoxes();
         }
 
         private void UpdateTextBoxes()
@@ -88,8 +86,6 @@ namespace AutoavstägningCS
 
         private void StartShutdownProcess()
         {
-
-            Process sh = new Process();
             if (shutdownCounter >= 1800)
             {
                 if (!CheckIfTeamsIsRunning())
@@ -98,19 +94,17 @@ namespace AutoavstägningCS
                     shutdownCounter = 0;
                     Process.Start("shutdown", "/h");
                 }
+                else
+                {
+                    shutdownCounter = 0;
+                }
             }
         }
 
         bool CheckIfTeamsIsRunning()
         {
-            Process[] localByName = Process.GetProcessesByName("Teams");
-
-            if (localByName.Length != 0)
-            {
-                return true;
-            }
-
-            return false;
+            var process = Process.GetProcessesByName("Teams");
+            return process.Length != 0;
         }
 
         private void label2_Click(object sender, EventArgs e)
