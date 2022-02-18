@@ -7,48 +7,48 @@ namespace AutoavstägningCS
 {
     public partial class MainForm : Form
     {
-        KeyboardHandler keyboardKey = new KeyboardHandler();
-        private Timer timer1 = new Timer();
+        readonly KeyboardHandler _keyboardKey = new();
 
-        int insertkeyPressed3seconds = 0;
-        int shutdownCounter = 0;
-        int times = 0;
-        int elapsedTime = 0;
-        string insertkeyPressed;
+        private readonly Timer _timer1 = new();
+        private int _insertkeyPressed3seconds = 0;
+        private int _shutdownCounter { get;set; }
+        private int _times { get; set; }
+        private int _elapsedTime { get; set; }  = 0;
+        private string _insertkeyPressed { get; set; }
 
         public MainForm()
         {
             InitializeComponent();
 
-            timer1.Enabled = true;
-            timer1.Interval = 1000;
-            timer1.Tick += new System.EventHandler(this.Timer1_Tick);
+            _timer1.Enabled = true;
+            _timer1.Interval = 1000;
+            _timer1.Tick += new System.EventHandler(this.Timer1_Tick);
 
-            keyboardKey.HookedKeys.Add(Keys.Insert);
-            keyboardKey.HookedKeys.Add(Keys.Insert);
+            _keyboardKey.HookedKeys.Add(Keys.Insert);
+            _keyboardKey.HookedKeys.Add(Keys.Insert);
 
-            keyboardKey.KeyUp += new KeyEventHandler((o, e) => { insertkeyPressed = string.Empty; e.Handled = true; });
-            keyboardKey.KeyDown += new KeyEventHandler((o, e) => { insertkeyPressed = e.KeyCode.ToString(); e.Handled = true; });
+            _keyboardKey.KeyUp += new KeyEventHandler((o, e) => { _insertkeyPressed = string.Empty; e.Handled = true; });
+            _keyboardKey.KeyDown += new KeyEventHandler((o, e) => { _insertkeyPressed = e.KeyCode.ToString(); e.Handled = true; });
         }
 
         private void Timer1_Tick(object sender, EventArgs e)
         {
-            if (insertkeyPressed == Keys.Insert.ToString())
+            if (_insertkeyPressed == Keys.Insert.ToString())
             {
-                insertkeyPressed3seconds++;
+                _insertkeyPressed3seconds++;
 
-                if (insertkeyPressed3seconds.ToString() == "3")
+                if (_insertkeyPressed3seconds.ToString() == "3")
                 {
                     ShowTimerMessageBox();
                 }
             }
             else
             {
-                insertkeyPressed3seconds = 0;
+                _insertkeyPressed3seconds = 0;
             }
 
-            shutdownCounter++;
-            elapsedTime++;
+            _shutdownCounter++;
+            _elapsedTime++;
 
             StartShutdownProcess();
 
@@ -58,45 +58,47 @@ namespace AutoavstägningCS
         private void UpdateTextBoxes()
         {
             //gör eandast att variablerna är synliga i labels (kontrollsyfte)
-            label1.Text = shutdownCounter.ToString();
-            label2.Text = times.ToString();
-            label3.Text = elapsedTime.ToString();
-            label4.Text = insertkeyPressed;
-            label9.Text = insertkeyPressed3seconds.ToString();
+            label1.Text = _shutdownCounter.ToString();
+            label2.Text = _times.ToString();
+            label3.Text = _elapsedTime.ToString();
+            label4.Text = _insertkeyPressed;
+            label9.Text = _insertkeyPressed3seconds.ToString();
         }
 
         private void ShowTimerMessageBox()
         {
-            TimeSpan ts = TimeSpan.FromSeconds(elapsedTime);
+            TimeSpan time = TimeSpan.FromSeconds(_elapsedTime);
 
-            string h = ts.ToString().Substring(0, 2);                                                     //tar ut timme från sekunder
-            string min = ts.ToString().Substring(3, 2);                                                   //tar ut timme från sekunder
-            string sec = ts.ToString().Substring(6, 2);                                                   //tar ut minut från sekunder
+            string h = time.ToString().Substring(0, 2);                                                   //tar ut timme från sekunder
+            string min = time.ToString().Substring(3, 2);                                                 //tar ut timme från sekunder
+            string sec = time.ToString().Substring(6, 2);                                                 //tar ut minut från sekunder
 
             if (h.Substring(0, 1).ToString() == "0") { h = h.Substring(1, 1); }                           //kollar ifall 0 finns med tar då bort den.
             if (min.Substring(0, 1).ToString() == "0") { min = min.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
             if (sec.Substring(0, 1).ToString() == "0") { sec = sec.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
 
-            MessageBox.Show("Du har startat om datorn: " + times.ToString() + " gånger\n" +
+            MessageBox.Show("Du har startat om datorn: " + _times.ToString() + " gånger\n" +
                         "Din tid vid datorn är " + h + " timmar, " + min + " minuter och " + sec + " sekunder.\n",
                         "Din tid vid datorn", System.Windows.Forms.MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-            insertkeyPressed3seconds = 0;
+                        MessageBoxIcon.Information,
+                        MessageBoxDefaultButton.Button1,
+                        MessageBoxOptions.DefaultDesktopOnly);
+            _insertkeyPressed3seconds = 0;
         }
 
         private void StartShutdownProcess()
         {
-            if (shutdownCounter >= 1800)
+            if (_shutdownCounter >= 2700)
             {
                 if (!CheckIfTeamsIsRunning())
                 {
-                    times++;
-                    shutdownCounter = 0;
-                    Process.Start("shutdown", "/h");
+                    _times++;
+                    _shutdownCounter = 0;
+                    Process.Start(@"C:\WINDOWS\system32\rundll32.exe", "user32.dll,LockWorkStation");
                 }
                 else
                 {
-                    shutdownCounter = 0;
+                    _shutdownCounter = 0;
                 }
             }
         }
@@ -114,7 +116,7 @@ namespace AutoavstägningCS
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            this.Hide();
         }
 
         private void lstLog_SelectedIndexChanged(object sender, EventArgs e)
