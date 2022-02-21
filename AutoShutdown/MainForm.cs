@@ -10,21 +10,30 @@ namespace AutoavstägningCS
         readonly KeyboardHandler _keyboardKey = new();
 
         private readonly Timer _timer1 = new();
+        private readonly Timer _timer2 = new();
+
         private int _insertkeyPressed3seconds = 0;
-        private int _shutdownCounter { get;set; }
+        private int _shutdownCounter { get; set; }
         private int _times { get; set; }
-        private int _elapsedTime { get; set; }  = 0;
+        private int _elapsedTime { get; set; } = 0;
         private string _insertkeyPressed { get; set; }
 
         public MainForm()
         {
-            InitializeComponent();
+            this.WindowState = FormWindowState.Minimized;
+            this.ShowInTaskbar = false;
+            this.Hide();
 
+            InitializeComponent();
+            s
             _timer1.Enabled = true;
             _timer1.Interval = 1000;
             _timer1.Tick += new System.EventHandler(this.Timer1_Tick);
 
-            _keyboardKey.HookedKeys.Add(Keys.Insert);
+            _timer2.Enabled = true;
+            _timer2.Interval = 1;
+            _timer2.Tick += new System.EventHandler(this.Timer2_Tick);
+
             _keyboardKey.HookedKeys.Add(Keys.Insert);
 
             _keyboardKey.KeyUp += new KeyEventHandler((o, e) => { _insertkeyPressed = string.Empty; e.Handled = true; });
@@ -51,8 +60,6 @@ namespace AutoavstägningCS
             _elapsedTime++;
 
             StartShutdownProcess();
-
-            UpdateTextBoxes();
         }
 
         private void UpdateTextBoxes()
@@ -67,22 +74,32 @@ namespace AutoavstägningCS
 
         private void ShowTimerMessageBox()
         {
+            _insertkeyPressed = string.Empty;
+
             TimeSpan time = TimeSpan.FromSeconds(_elapsedTime);
 
             string h = time.ToString().Substring(0, 2);                                                   //tar ut timme från sekunder
             string min = time.ToString().Substring(3, 2);                                                 //tar ut timme från sekunder
             string sec = time.ToString().Substring(6, 2);                                                 //tar ut minut från sekunder
 
+            var timeNowInMinutes = _shutdownCounter / 60;
+
+
             if (h.Substring(0, 1).ToString() == "0") { h = h.Substring(1, 1); }                           //kollar ifall 0 finns med tar då bort den.
             if (min.Substring(0, 1).ToString() == "0") { min = min.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
             if (sec.Substring(0, 1).ToString() == "0") { sec = sec.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
 
-            MessageBox.Show("Du har startat om datorn: " + _times.ToString() + " gånger\n" +
-                        "Din tid vid datorn är " + h + " timmar, " + min + " minuter och " + sec + " sekunder.\n",
-                        "Din tid vid datorn", System.Windows.Forms.MessageBoxButtons.OK,
+            MessageBox.Show(
+                        "Du har startat om datorn: " + _times + " gånger\n" +
+                        "Din totala tid vid datorn är: " + h + " timmar, " + min + " min och " + sec + " sekunder. \n" +
+                        "Din tid vid datorn just nu är: " + timeNowInMinutes + " minuter.",
+
+                        "Din tid vid datorn",
+                        System.Windows.Forms.MessageBoxButtons.OK,
                         MessageBoxIcon.Information,
                         MessageBoxDefaultButton.Button1,
                         MessageBoxOptions.DefaultDesktopOnly);
+
             _insertkeyPressed3seconds = 0;
         }
 
@@ -116,7 +133,6 @@ namespace AutoavstägningCS
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            this.Hide();
         }
 
         private void lstLog_SelectedIndexChanged(object sender, EventArgs e)
@@ -125,6 +141,11 @@ namespace AutoavstägningCS
 
         private void label1_Click(object sender, EventArgs e)
         {
+        }
+
+        private void Timer2_Tick(object sender, EventArgs e)
+        {
+            UpdateTextBoxes();
         }
     }
 }
