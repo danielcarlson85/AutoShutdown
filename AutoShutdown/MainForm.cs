@@ -13,9 +13,9 @@ namespace AutoavstägningCS
         private readonly Timer _timer2 = new();
 
         private int _insertkeyPressed3seconds = 0;
-        private int _shutdownCounter { get; set; }
+        private int _shutdownCounter { get;set; }
         private int _times { get; set; }
-        private int _elapsedTime { get; set; } = 0;
+        private int _elapsedTime { get; set; }  = 0;
         private string _insertkeyPressed { get; set; }
 
         public MainForm()
@@ -25,15 +25,16 @@ namespace AutoavstägningCS
             this.Hide();
 
             InitializeComponent();
-            s
+
             _timer1.Enabled = true;
             _timer1.Interval = 1000;
             _timer1.Tick += new System.EventHandler(this.Timer1_Tick);
-
+            
             _timer2.Enabled = true;
             _timer2.Interval = 1;
             _timer2.Tick += new System.EventHandler(this.Timer2_Tick);
 
+            _keyboardKey.HookedKeys.Add(Keys.Insert);
             _keyboardKey.HookedKeys.Add(Keys.Insert);
 
             _keyboardKey.KeyUp += new KeyEventHandler((o, e) => { _insertkeyPressed = string.Empty; e.Handled = true; });
@@ -88,12 +89,12 @@ namespace AutoavstägningCS
             if (h.Substring(0, 1).ToString() == "0") { h = h.Substring(1, 1); }                           //kollar ifall 0 finns med tar då bort den.
             if (min.Substring(0, 1).ToString() == "0") { min = min.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
             if (sec.Substring(0, 1).ToString() == "0") { sec = sec.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
-
+            
             MessageBox.Show(
                         "Du har startat om datorn: " + _times + " gånger\n" +
-                        "Din totala tid vid datorn är: " + h + " timmar, " + min + " min och " + sec + " sekunder. \n" +
+                        "Din totala tid vid datorn är: " + h + " timmar, " + min + " min och " + sec + " sekunder. \n"+
                         "Din tid vid datorn just nu är: " + timeNowInMinutes + " minuter.",
-
+                        
                         "Din tid vid datorn",
                         System.Windows.Forms.MessageBoxButtons.OK,
                         MessageBoxIcon.Information,
