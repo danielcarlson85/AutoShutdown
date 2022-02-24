@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Utilities;
 
@@ -8,59 +11,57 @@ namespace AutoavstägningCS
     public partial class MainForm : Form
     {
         readonly KeyboardHandler _keyboardKey = new();
-
-        private readonly Timer _timer1 = new();
-        private readonly Timer _timer2 = new();
-
+        private readonly Timer _shutdownTimer = new();
+        private readonly Timer _updateUITimer = new();
+        private Keys _key = Keys.F8;
         private int _insertkeyPressed3seconds = 0;
-        private int _shutdownCounter { get;set; }
+        private int _shutdownCounter { get; set; }
         private int _times { get; set; }
-        private int _elapsedTime { get; set; }  = 0;
+        private int _elapsedTime { get; set; } = 0;
         private string _insertkeyPressed { get; set; }
 
         public MainForm()
         {
-            this.WindowState = FormWindowState.Minimized;
-            this.ShowInTaskbar = false;
-            this.Hide();
-
             InitializeComponent();
 
-            _timer1.Enabled = true;
-            _timer1.Interval = 1000;
-            _timer1.Tick += new System.EventHandler(this.Timer1_Tick);
-            
-            _timer2.Enabled = true;
-            _timer2.Interval = 1;
-            _timer2.Tick += new System.EventHandler(this.Timer2_Tick);
+            _shutdownTimer.Enabled = true;
+            _shutdownTimer.Interval = 1000;
+            _shutdownTimer.Tick += new System.EventHandler(this.ShutdownTimer_Tick);
 
-            _keyboardKey.HookedKeys.Add(Keys.Insert);
-            _keyboardKey.HookedKeys.Add(Keys.Insert);
+            _updateUITimer.Enabled = true;
+            _updateUITimer.Interval = 1;
+            _updateUITimer.Tick += new System.EventHandler(this.UpdateUITimer_Tick);
 
-            _keyboardKey.KeyUp += new KeyEventHandler((o, e) => { _insertkeyPressed = string.Empty; e.Handled = true; });
+            _keyboardKey.HookedKeys.Add(_key);
+
             _keyboardKey.KeyDown += new KeyEventHandler((o, e) => { _insertkeyPressed = e.KeyCode.ToString(); e.Handled = true; });
+            _keyboardKey.KeyUp += new KeyEventHandler((o, e) => { _insertkeyPressed = string.Empty; e.Handled = true; });
         }
 
-        private void Timer1_Tick(object sender, EventArgs e)
+        private async void ShutdownTimer_Tick(object sender, EventArgs e)
         {
-            if (_insertkeyPressed == Keys.Insert.ToString())
+            await Task.Run(async () =>
             {
-                _insertkeyPressed3seconds++;
-
-                if (_insertkeyPressed3seconds.ToString() == "3")
+                if (_insertkeyPressed == _key.ToString())
                 {
-                    ShowTimerMessageBox();
+                    _insertkeyPressed3seconds++;
+
+                    if (_insertkeyPressed3seconds.ToString() == "3")
+                    {
+                        await ShowTimerMessageBoxAsync();
+                    }
                 }
-            }
-            else
-            {
-                _insertkeyPressed3seconds = 0;
-            }
+                else
+                {
+                    _insertkeyPressed3seconds = 0;
+                }
 
-            _shutdownCounter++;
-            _elapsedTime++;
+                _shutdownCounter++;
+                _elapsedTime++;
 
-            StartShutdownProcess();
+                await StartShutdownProcessAsync();
+
+            });
         }
 
         private void UpdateTextBoxes()
@@ -73,42 +74,47 @@ namespace AutoavstägningCS
             label9.Text = _insertkeyPressed3seconds.ToString();
         }
 
-        private void ShowTimerMessageBox()
+        private async Task ShowTimerMessageBoxAsync()
         {
-            _insertkeyPressed = string.Empty;
+            await Task.Run(async () =>
+            {
+                _insertkeyPressed = string.Empty;
 
-            TimeSpan time = TimeSpan.FromSeconds(_elapsedTime);
+                TimeSpan time = TimeSpan.FromSeconds(_elapsedTime);
 
-            string h = time.ToString().Substring(0, 2);                                                   //tar ut timme från sekunder
-            string min = time.ToString().Substring(3, 2);                                                 //tar ut timme från sekunder
-            string sec = time.ToString().Substring(6, 2);                                                 //tar ut minut från sekunder
+                string h = time.ToString().Substring(0, 2);                                                   //tar ut timme från sekunder
+                string min = time.ToString().Substring(3, 2);                                                 //tar ut timme från sekunder
+                string sec = time.ToString().Substring(6, 2);                                                 //tar ut minut från sekunder
 
-            var timeNowInMinutes = _shutdownCounter / 60;
+                var timeNowInMinutes = _shutdownCounter / 60;
 
+                var isTeamsRunning = await CheckIfTeamsIsRunning();
 
-            if (h.Substring(0, 1).ToString() == "0") { h = h.Substring(1, 1); }                           //kollar ifall 0 finns med tar då bort den.
-            if (min.Substring(0, 1).ToString() == "0") { min = min.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
-            if (sec.Substring(0, 1).ToString() == "0") { sec = sec.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
-            
-            MessageBox.Show(
+                if (h.Substring(0, 1).ToString() == "0") { h = h.Substring(1, 1); }                           //kollar ifall 0 finns med tar då bort den.
+                if (min.Substring(0, 1).ToString() == "0") { min = min.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
+                if (sec.Substring(0, 1).ToString() == "0") { sec = sec.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
+
+                MessageBox.Show(
                         "Du har startat om datorn: " + _times + " gånger\n" +
-                        "Din totala tid vid datorn är: " + h + " timmar, " + min + " min och " + sec + " sekunder. \n"+
-                        "Din tid vid datorn just nu är: " + timeNowInMinutes + " minuter.",
-                        
+                        "Din totala tid vid datorn är: " + h + " timmar, " + min + " min och " + sec + " sekunder. \n" +
+                        "Din tid vid datorn just nu är: " + timeNowInMinutes + " minuter. \n" +
+                        "Körs Teams: " + isTeamsRunning,
+
                         "Din tid vid datorn",
                         System.Windows.Forms.MessageBoxButtons.OK,
                         MessageBoxIcon.Information,
                         MessageBoxDefaultButton.Button1,
                         MessageBoxOptions.DefaultDesktopOnly);
 
-            _insertkeyPressed3seconds = 0;
+                _insertkeyPressed3seconds = 0;
+            });
         }
 
-        private void StartShutdownProcess()
+        private async Task StartShutdownProcessAsync()
         {
             if (_shutdownCounter >= 2700)
             {
-                if (!CheckIfTeamsIsRunning())
+                if (!await CheckIfTeamsIsRunning())
                 {
                     _times++;
                     _shutdownCounter = 0;
@@ -121,10 +127,14 @@ namespace AutoavstägningCS
             }
         }
 
-        bool CheckIfTeamsIsRunning()
+        async Task<bool> CheckIfTeamsIsRunning()
         {
-            var process = Process.GetProcessesByName("Teams");
-            return process.Length != 0;
+            List<Process> process = new();
+            await Task.Run(() => process = Process.GetProcessesByName("Teams")
+                      .AsEnumerable()
+                      .ToList());
+
+            return process.Count != 0;
         }
 
         private void label2_Click(object sender, EventArgs e)
@@ -144,7 +154,7 @@ namespace AutoavstägningCS
         {
         }
 
-        private void Timer2_Tick(object sender, EventArgs e)
+        private void UpdateUITimer_Tick(object sender, EventArgs e)
         {
             UpdateTextBoxes();
         }
