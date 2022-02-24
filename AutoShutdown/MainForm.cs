@@ -118,7 +118,7 @@ namespace AutoavstägningCS
                 {
                     _times++;
                     _shutdownCounter = 0;
-                    Process.Start(@"C:\WINDOWS\system32\rundll32.exe", "user32.dll,LockWorkStation");
+                    await Task.Run(() => Process.Start(@"shutdown", "-h"));
                 }
                 else
                 {
@@ -144,6 +144,7 @@ namespace AutoavstägningCS
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            Hide();
         }
 
         private void lstLog_SelectedIndexChanged(object sender, EventArgs e)
