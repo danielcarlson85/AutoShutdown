@@ -4,16 +4,17 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Utilities;
 
 namespace AutoavstägningCS
 {
     public partial class MainForm : Form
     {
-        readonly KeyboardHandler _keyboardKey = new();
-        private readonly Timer _shutdownTimer = new();
-        private readonly Timer _updateUITimer = new();
-        private Keys _key = Keys.F8;
+        private readonly Timer _messageBoxTimer = new Timer();
+        private readonly Timer _keyPressTimer = new Timer();
+        private readonly Timer _updateUITimer = new Timer();
+
+        private Keys _key = Keys.Alt;
+
         private int _insertkeyPressed3seconds = 0;
         private int _shutdownCounter { get; set; }
         private int _times { get; set; }
@@ -24,19 +25,31 @@ namespace AutoavstägningCS
         {
             InitializeComponent();
 
-            _shutdownTimer.Enabled = true;
-            _shutdownTimer.Interval = 1000;
-            _shutdownTimer.Tick += new System.EventHandler(this.ShutdownTimer_Tick);
+            _messageBoxTimer.Interval = 1000;
+            _messageBoxTimer.Tick += new System.EventHandler(ShutdownTimer_Tick);
+            _messageBoxTimer.Start();
 
-            _updateUITimer.Enabled = true;
+            _keyPressTimer.Interval = 100;
+            _keyPressTimer.Tick += new System.EventHandler(KeyPressTimer_Tick);
+            _keyPressTimer.Start();
+
             _updateUITimer.Interval = 1;
-            _updateUITimer.Tick += new System.EventHandler(this.UpdateUITimer_Tick);
-
-            _keyboardKey.HookedKeys.Add(_key);
-
-            _keyboardKey.KeyDown += new KeyEventHandler((o, e) => { _insertkeyPressed = e.KeyCode.ToString(); e.Handled = true; });
-            _keyboardKey.KeyUp += new KeyEventHandler((o, e) => { _insertkeyPressed = string.Empty; e.Handled = true; });
+            _updateUITimer.Tick += new System.EventHandler(UpdateUITimer_Tick);
+            _updateUITimer.Start();
         }
+
+        private void KeyPressTimer_Tick(object sender, EventArgs e)
+        {
+            if (ModifierKeys == _key)
+            {
+                _insertkeyPressed = _key.ToString();
+            }
+            else
+            {
+                _insertkeyPressed = string.Empty;
+            }
+        }
+
 
         private async void ShutdownTimer_Tick(object sender, EventArgs e)
         {
@@ -129,7 +142,7 @@ namespace AutoavstägningCS
 
         async Task<bool> CheckIfTeamsIsRunning()
         {
-            List<Process> process = new();
+            List<Process> process = new List<Process>();
             await Task.Run(() => process = Process.GetProcessesByName("Teams")
                       .AsEnumerable()
                       .ToList());
