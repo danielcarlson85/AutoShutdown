@@ -142,12 +142,14 @@ namespace AutoavstägningCS
 
         async Task<bool> CheckIfTeamsIsRunning()
         {
-            List<Process> process = new List<Process>();
-            await Task.Run(() => process = Process.GetProcessesByName("Teams")
-                      .AsEnumerable()
-                      .ToList());
+            //List<Process> process = new List<Process>();
+            //await Task.Run(() => process = Process.GetProcessesByName("Teams")
+            //          .AsEnumerable()
+            //          .ToList());
 
-            return process.Count != 0;
+            //return process.Count != 0;
+
+            return false;
         }
 
         private void label2_Click(object sender, EventArgs e)
