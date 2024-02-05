@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -12,6 +13,7 @@ namespace AutoavstägningCS
         private readonly Timer _messageBoxTimer = new Timer();
         private readonly Timer _keyPressTimer = new Timer();
         private readonly Timer _updateUITimer = new Timer();
+        private readonly NotifyIcon notifyIcon = new NotifyIcon();
 
         private Keys _key = Keys.Alt;
 
@@ -24,6 +26,8 @@ namespace AutoavstägningCS
         public MainForm()
         {
             InitializeComponent();
+            InitializeNotifyIcon();
+
 
             _messageBoxTimer.Interval = 1000;
             _messageBoxTimer.Tick += new System.EventHandler(ShutdownTimer_Tick);
@@ -36,6 +40,12 @@ namespace AutoavstägningCS
             _updateUITimer.Interval = 1;
             _updateUITimer.Tick += new System.EventHandler(UpdateUITimer_Tick);
             _updateUITimer.Start();
+        }
+
+        private void InitializeNotifyIcon()
+        {
+            notifyIcon.Icon = new Icon("icon.ico");
+            notifyIcon.Visible = true;
         }
 
         private void KeyPressTimer_Tick(object sender, EventArgs e)
@@ -89,7 +99,7 @@ namespace AutoavstägningCS
 
         private async Task ShowTimerMessageBoxAsync()
         {
-            await Task.Run(async () =>
+            await Task.Run(() =>
             {
                 _insertkeyPressed = string.Empty;
 
@@ -101,7 +111,7 @@ namespace AutoavstägningCS
 
                 var timeNowInMinutes = _shutdownCounter / 60;
 
-                var isTeamsRunning = await CheckIfTeamsIsRunning();
+                var isTeamsRunning = CheckIfTeamsIsRunning();
 
                 if (h.Substring(0, 1).ToString() == "0") { h = h.Substring(1, 1); }                           //kollar ifall 0 finns med tar då bort den.
                 if (min.Substring(0, 1).ToString() == "0") { min = min.Substring(1, 1); }                     //kollar ifall 0 finns med tar då bort den.
@@ -127,7 +137,7 @@ namespace AutoavstägningCS
         {
             if (_shutdownCounter >= 2700)
             {
-                if (!await CheckIfTeamsIsRunning())
+                if (!CheckIfTeamsIsRunning())
                 {
                     _times++;
                     _shutdownCounter = 0;
@@ -140,7 +150,7 @@ namespace AutoavstägningCS
             }
         }
 
-        async Task<bool> CheckIfTeamsIsRunning()
+        static bool CheckIfTeamsIsRunning()
         {
             //List<Process> process = new List<Process>();
             //await Task.Run(() => process = Process.GetProcessesByName("Teams")
